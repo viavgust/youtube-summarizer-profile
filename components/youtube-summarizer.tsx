@@ -348,7 +348,12 @@ export default function YouTubeSummarizer() {
                     {/* Селектор языка */}
                     <div className="flex-1">
                       <Select value={lang} onValueChange={(value: "en" | "ru") => setLang(value)}>
-                        <SelectTrigger className="h-14 sm:h-16 text-base sm:text-lg border-gray-200 dark:border-gray-700 focus:border-purple-400 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 dark:focus:ring-purple-400/20 transition-all duration-300 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-gray-100">
+                        <SelectTrigger
+                          className="h-14 sm:h-16 text-base sm:text-lg font-bold bg-gradient-to-r from-purple-500 to-blue-400 hover:from-purple-600 hover:to-blue-500 text-white border-0 rounded-xl shadow-lg hover:shadow-purple-500/25 transition-all duration-300 focus:ring-2 focus:ring-purple-400/50 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-950"
+                          style={{
+                            boxShadow: "0 10px 20px -6px rgba(147, 51, 234, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)",
+                          }}
+                        >
                           <SelectValue placeholder="Выберите язык" />
                         </SelectTrigger>
                         <SelectContent className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700 rounded-xl shadow-lg">
@@ -360,7 +365,7 @@ export default function YouTubeSummarizer() {
                     <Button
                       onClick={handleSummarize}
                       disabled={isLoading}
-                      className="flex-1 h-14 sm:h-16 px-8 sm:px-16 text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 text-white border-0 rounded-2xl shadow-2xl hover:shadow-purple-500/25 transform hover:scale-110 transition-all duration-500 disabled:transform-none disabled:hover:scale-100 hover:shadow-3xl animate-pulse hover:animate-none focus:ring-2 focus:ring-purple-400/50 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-950"
+                      className="flex-1 h-14 sm:h-16 px-8 sm:px-16 text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-500 to-blue-400 hover:from-purple-600 hover:to-blue-500 text-white border-0 rounded-2xl shadow-2xl hover:shadow-purple-500/25 transform hover:scale-110 transition-all duration-500 disabled:transform-none disabled:hover:scale-100 hover:shadow-3xl animate-pulse hover:animate-none focus:ring-2 focus:ring-purple-400/50 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-950"
                       style={{
                         boxShadow: "0 20px 40px -12px rgba(147, 51, 234, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)",
                       }}
@@ -371,7 +376,7 @@ export default function YouTubeSummarizer() {
                           Обрабатываю...
                         </>
                       ) : (
-                        "Кратко о видео"
+                        "Анализ видео"
                       )}
                     </Button>
                   </div>

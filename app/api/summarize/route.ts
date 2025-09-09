@@ -115,7 +115,13 @@ export async function POST(request: Request) {
   const debugMode = searchParams.get("debug") === "1" || requestBody.debug === 1;
 
   try {
-    const { url, scenario, lang = "ru" } = requestBody;
+    const { url, scenario, lang: receivedLang = "ru" } = requestBody;
+    const targetLang = receivedLang === "en" ? "en" : "ru"; // Нормализация языка
+
+    if (debugMode) {
+      diagnostics.receivedLang = receivedLang;
+      diagnostics.targetLang = targetLang;
+    }
 
     if (!url || typeof url !== "string") {
       const errorMsg = "Ошибка: Некорректный URL в запросе.";
@@ -124,7 +130,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Пожалуйста, введите корректную ссылку на YouTube видео.", ...(debugMode && { diagnostics }) }, { status: 400 });
     }
 
-    console.log(`Получен запрос на суммирование для URL: ${url}, сценарий: ${scenario}, язык: ${lang}`)
+    console.log(`Получен запрос на суммирование для URL: ${url}, сценарий: ${scenario}, язык: ${receivedLang}`)
 
     // Извлечение videoId из YouTube URL
     const videoId = extractYouTubeId(url);
@@ -155,15 +161,15 @@ export async function POST(request: Request) {
     }
 
     // Шаг 1: Вызов RapidAPI для получения транскрипта
-    const rapidApiUrl = `https://youtube-captions-transcript-subtitles-video-combiner.p.rapidapi.com/download-all/${videoId}?format_subtitle=srt&format_answer=json&lang=${lang}`
+    const rapidApiUrl = `https://youtube-captions-transcript-subtitles-video-combiner.p.rapidapi.com/download-all/${videoId}?format_subtitle=srt&format_answer=json&lang=${receivedLang}`
     const rapidApiHeaders = {
       "x-rapidapi-host": "youtube-captions-transcript-subtitles-video-combiner.p.rapidapi.com",
       "x-rapidapi-key": rapidApiKey,
       "Accept": "application/json"
     }
 
-    console.log(`Вызов RapidAPI для videoId: ${videoId} с языком: ${lang}`);
-    diagnostics.langTried.push(lang);
+    console.log(`Вызов RapidAPI для videoId: ${videoId} с языком: ${receivedLang}`);
+    diagnostics.langTried.push(receivedLang);
     const rapidApiResponse = await fetch(rapidApiUrl, { headers: rapidApiHeaders });
 
     if (!rapidApiResponse.ok) {
@@ -199,12 +205,12 @@ export async function POST(request: Request) {
     diagnostics.lengths.rapid = transcript ? transcript.length : null;
     if (transcript) {
       diagnostics.source = "rapidapi";
-      diagnostics.actualTranscriptLang = lang; // Устанавливаем язык, если транскрипт найден
+      diagnostics.actualTranscriptLang = receivedLang; // Устанавливаем язык, если транскрипт найден
     }
 
     // если пусто — повторный запрос с lang=en
     if (transcript === null || transcript.trim().length === 0) {
-      console.log(`Транскрипт не найден для языка ${lang}, попытка с lang=en для videoId: ${videoId}`);
+      console.log(`Транскрипт не найден для языка ${receivedLang}, попытка с lang=en для videoId: ${videoId}`);
       diagnostics.langTried.push("en");
       const base = "https://youtube-captions-transcript-subtitles-video-combiner.p.rapidapi.com";
       const retryUrl = `${base}/download-all/${videoId}?format_subtitle=srt&format_answer=json&lang=en`;
@@ -300,25 +306,31 @@ export async function POST(request: Request) {
       "X-goog-api-key": geminiApiKey,
     }
 
-    const targetLanguagePhrase = diagnostics.actualTranscriptLang === "en" ? "на английском языке" : "на русском языке";
+    // Гарантируем, что промпт содержит жесткую директиву языка
+    const languageDirective = targetLang === "en" ? "English" : "Russian";
+    const promptPrefix = `Ответ дай на ${languageDirective}. Без Markdown и лишних кавычек.`;
 
     // Формирование промпта для Gemini API в зависимости от сценария
     let prompt = ""
     switch (scenario) {
       case "quick":
-        prompt = `Суммируй следующий текст видео ${targetLanguagePhrase} в 5-8 ключевых буллетов: ${transcript}`
+        prompt = `${promptPrefix} Суммируй следующий текст видео в 5-8 ключевых буллетов: ${transcript}`
         break
       case "deep":
-        prompt = `Проведи глубокий анализ следующего текста видео ${targetLanguagePhrase}. Выдели скрытые инсайты, контраргументы, потенциальные риски, когнитивные смещения, определи целевую аудиторию и предложи 3 конкретных шага для применения знаний: ${transcript}`
+        prompt = `${promptPrefix} Проведи глубокий анализ следующего текста видео. Выдели скрытые инсайты, контраргументы, потенциальные риски, когнитивные смещения, определи целевую аудиторию и предложи 3 конкретных шага для применения знаний: ${transcript}`
         break
       case "decision":
-        prompt = `Проанализируй следующий текст видео ${targetLanguagePhrase} и дай четкий вердикт (Да/Сомнительно/Нет) стоит ли его смотреть. Обоснуй свой вердикт, проанализируй соотношение ценности к длительности и определи подходящую аудиторию для этого контента: ${transcript}`
+        prompt = `${promptPrefix} Проанализируй следующий текст видео и дай четкий вердикт (Да/Сомнительно/Нет) стоит ли его смотреть. Обоснуй свой вердикт, проанализируй соотношение ценности к длительности и определи подходящую аудиторию для этого контента: ${transcript}`
         break
       case "audio":
-        prompt = `Суммируй следующий текст видео ${targetLanguagePhrase} в 5 сверхкоротких ключевых пунктов в формате для прослушивания и предложи 1-2 запоминающиеся "мантры дня" для мотивации и закрепления идей: ${transcript}`
+        prompt = `${promptPrefix} Суммируй следующий текст видео в 5 сверхкоротких ключевых пунктов в формате для прослушивания и предложи 1-2 запоминающиеся "мантры дня" для мотивации и закрепления идей: ${transcript}`
         break
       default:
-        prompt = `Суммируй следующий текст видео ${targetLanguagePhrase}: ${transcript}`
+        prompt = `${promptPrefix} Суммируй следующий текст видео: ${transcript}`
+    }
+
+    if (debugMode) {
+      diagnostics.promptFirstLine = prompt.split('\n')[0];
     }
 
     const geminiApiBody = {
@@ -347,7 +359,7 @@ export async function POST(request: Request) {
     }
 
     const geminiApiData = await geminiApiResponse.json()
-    const summarizedText = geminiApiData.candidates[0]?.content?.parts[0]?.text
+    let summarizedText = geminiApiData.candidates[0]?.content?.parts[0]?.text;
 
     if (!summarizedText || summarizedText.trim() === "") {
       const warnMsg = "Не удалось получить суммированный текст от Gemini API или он пуст.";
@@ -355,11 +367,83 @@ export async function POST(request: Request) {
       diagnostics.errors.push(warnMsg);
       return NextResponse.json({ error: "Не удалось получить суммированный текст от Gemini API.", ...(debugMode && { diagnostics }) }, { status: 500 });
     }
+
+    if (debugMode) {
+      diagnostics.modelResponseFirst100Chars = summarizedText.substring(0, 100);
+      // Грубая эвристика для определения языка
+      const isCyrillic = /[а-яА-ЯЁё]/.test(summarizedText);
+      const isLatin = /[a-zA-Z]/.test(summarizedText);
+      if (isCyrillic && !isLatin) {
+        diagnostics.finalLangGuess = "ru";
+      } else if (isLatin && !isCyrillic) {
+        diagnostics.finalLangGuess = "en";
+      } else if (isCyrillic && isLatin) {
+        diagnostics.finalLangGuess = "mixed";
+      } else {
+        diagnostics.finalLangGuess = "unknown";
+      }
+    }
+
     console.log(`Суммирование успешно получено (первые 100 символов): ${summarizedText.substring(0, 100)}...`);
+
+    // Мягкий фолбэк: если язык ответа не совпал с targetLang
+    if (debugMode && diagnostics.finalLangGuess !== "unknown" && diagnostics.finalLangGuess !== targetLang) {
+      console.warn(`Язык ответа модели (${diagnostics.finalLangGuess}) не совпал с целевым языком (${targetLang}). Выполняем фолбэк-перевод.`);
+      diagnostics.fallbackTriggered = true;
+
+      const fallbackPrompt = `Переведи следующий текст на ${languageDirective} без Markdown и лишних кавычек: ${summarizedText}`;
+      const fallbackApiBody = {
+        contents: [
+          {
+            parts: [
+              {
+                text: fallbackPrompt,
+              },
+            ],
+          },
+        ],
+      };
+
+      const fallbackApiResponse = await fetch(geminiApiUrl, {
+        method: "POST",
+        headers: geminiApiHeaders,
+        body: JSON.stringify(fallbackApiBody),
+      });
+
+      if (fallbackApiResponse.ok) {
+        const fallbackApiData = await fallbackApiResponse.json();
+        const translatedText = fallbackApiData.candidates[0]?.content?.parts[0]?.text;
+        if (translatedText && translatedText.trim() !== "") {
+          summarizedText = translatedText;
+          diagnostics.fallbackTranslatedTextFirst100Chars = translatedText.substring(0, 100);
+          // Повторная эвристика для переведенного текста
+          const isCyrillicFallback = /[а-яА-ЯЁё]/.test(translatedText);
+          const isLatinFallback = /[a-zA-Z]/.test(translatedText);
+          if (isCyrillicFallback && !isLatinFallback) {
+            diagnostics.finalLangGuessAfterFallback = "ru";
+          } else if (isLatinFallback && !isCyrillicFallback) {
+            diagnostics.finalLangGuessAfterFallback = "en";
+          } else if (isCyrillicFallback && isLatinFallback) {
+            diagnostics.finalLangGuessAfterFallback = "mixed";
+          } else {
+            diagnostics.finalLangGuessAfterFallback = "unknown";
+          }
+          console.log(`Фолбэк-перевод успешно получен (первые 100 символов): ${summarizedText.substring(0, 100)}...`);
+        } else {
+          diagnostics.errors.push("Фолбэк-перевод не дал результата.");
+        }
+      } else {
+        const fallbackErrorData = await fallbackApiResponse.json();
+        diagnostics.errors.push(`Ошибка фолбэк-перевода Gemini API (${fallbackApiResponse.status}): ${fallbackApiResponse.statusText}. Детали: ${JSON.stringify(fallbackErrorData)}`);
+      }
+    }
+
+    // Очистка текста от Markdown-символов
+    const cleanedText = summarizedText.replace(/[*_~`]/g, '');
 
     // Преобразование суммированного текста в формат SummaryPoint[]
     // Разбиваем по абзацам или предложениям, чтобы получить отдельные пункты.
-    const summaryPoints: SummaryPoint[] = summarizedText.split("\n").filter(Boolean).map((text: string, index: number) => ({
+    const summaryPoints: SummaryPoint[] = cleanedText.split("\n").filter(Boolean).map((text: string, index: number) => ({
       id: String(index + 1),
       text: text.trim(),
     }))

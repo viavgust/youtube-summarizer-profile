@@ -41,60 +41,116 @@ interface SummaryPoint {
   timestamp?: string
 }
 
+// Вспомогательная функция для извлечения текстовых значений из JSON-объекта
+const extractTextFromSummary = (jsonSummary: any): string => {
+  const texts: string[] = [];
+  if (jsonSummary.verdict && typeof jsonSummary.verdict === 'string') {
+    texts.push(`Вердикт: ${jsonSummary.verdict}`);
+  }
+  if (jsonSummary.reason && typeof jsonSummary.reason === 'string') {
+    texts.push(`Причина: ${jsonSummary.reason}`);
+  }
+  if (jsonSummary.valuevsduration && typeof jsonSummary.valuevsduration === 'string') {
+    texts.push(`Ценность/Длительность: ${jsonSummary.valuevsduration}`);
+  }
+  if (jsonSummary.targetaudience && typeof jsonSummary.targetaudience === 'string') {
+    texts.push(`Целевая аудитория: ${jsonSummary.targetaudience}`);
+  }
+  return texts.join('\n\n'); // Объединяем с двойным переносом строки для лучшей читаемости
+};
+
 type ScenarioType = "quick" | "deep" | "decision" | "audio"
 
 interface Scenario {
   id: ScenarioType
+  icon: React.ComponentType<{ className?: string }>
+}
+
+interface ScenarioText {
   title: string
   subtitle: string
   description: string
   tooltip: string
-  icon: React.ComponentType<{ className?: string }>
 }
 
 const scenarios: Scenario[] = [
-  {
-    id: "quick",
-    title: "Quick Scan",
-    subtitle: "Быстрый обзор ключевых моментов",
-    description: "моментальное саммари для быстрых решений",
-    tooltip:
-      "Получите 5–8 ключевых буллетов по сути видео: основные тезисы, важные факты, выводы. Идеально для быстрого понимания содержания без просмотра.",
-    icon: List,
-  },
-  {
-    id: "deep",
-    title: "Deep Dive",
-    subtitle: "Глубокий анализ с инсайтами",
-    description: "неочевидные инсайты и аргументы",
-    tooltip:
-      "Детальный разбор: скрытые инсайты, контраргументы, потенциальные риски и когнитивные смещения, целевая аудитория, плюс 3 конкретных шага для применения знаний.",
-    icon: Brain,
-  },
-  {
-    id: "decision",
-    title: "Decision Helper",
-    subtitle: "Стоит ли тратить время на просмотр",
-    description: "стоит ли смотреть: да/сомнительно/нет",
-    tooltip:
-      "Четкий вердикт (Да/Сомнительно/Нет) с обоснованием, анализ соотношения ценности к длительности, определение подходящей аудитории для этого контента.",
-    icon: CheckCircle,
-  },
-  {
-    id: "audio",
-    title: "Run & Listen",
-    subtitle: "Аудио-формат для активности",
-    description: "аудио-дайджест для дороги/пробежки",
-    tooltip:
-      "5 сверхкоротких ключевых пунктов в формате для прослушивания + 1–2 запоминающиеся 'мантры дня' для мотивации и закрепления идей.",
-    icon: Headphones,
-  },
+  { id: "quick", icon: List },
+  { id: "deep", icon: Brain },
+  { id: "decision", icon: CheckCircle },
+  { id: "audio", icon: Headphones },
 ]
+
+const scenarioTexts: Record<ScenarioType, Record<"en" | "ru", ScenarioText>> = {
+  quick: {
+    en: {
+      title: "Quick Scan",
+      subtitle: "Quick overview of key moments",
+      description: "instant summary for quick decisions",
+      tooltip:
+        "Get 5-8 key bullet points on the video's essence: main theses, important facts, conclusions. Ideal for quickly understanding content without watching.",
+    },
+    ru: {
+      title: "Быстрый обзор",
+      subtitle: "Быстрый обзор ключевых моментов",
+      description: "моментальное саммари для быстрых решений",
+      tooltip:
+        "Получите 5–8 ключевых буллетов по сути видео: основные тезисы, важные факты, выводы. Идеально для быстрого понимания содержания без просмотра.",
+    },
+  },
+  deep: {
+    en: {
+      title: "Deep Dive",
+      subtitle: "In-depth analysis with insights",
+      description: "non-obvious insights and arguments",
+      tooltip:
+        "Detailed breakdown: hidden insights, counterarguments, potential risks and cognitive biases, target audience, plus 3 concrete steps to apply knowledge.",
+    },
+    ru: {
+      title: "Глубокий анализ",
+      subtitle: "Глубокий анализ с инсайтами",
+      description: "неочевидные инсайты и аргументы",
+      tooltip:
+        "Детальный разбор: скрытые инсайты, контраргументы, потенциальные риски и когнитивные смещения, целевая аудитория, плюс 3 конкретных шага для применения знаний.",
+    },
+  },
+  decision: {
+    en: {
+      title: "Decision Helper",
+      subtitle: "Is it worth watching?",
+      description: "worth watching: yes/doubtful/no",
+      tooltip:
+        "Clear verdict (Yes/Doubtful/No) with justification, analysis of value-to-duration ratio, identification of the appropriate audience for this content.",
+    },
+    ru: {
+      title: "Помощник в принятии решений",
+      subtitle: "Стоит ли тратить время на просмотр",
+      description: "стоит ли смотреть: да/сомнительно/нет",
+      tooltip:
+        "Четкий вердикт (Да/Сомнительно/Нет) с обоснованием, анализ соотношения ценности к длительности, определение подходящей аудитории для этого контента.",
+    },
+  },
+  audio: {
+    en: {
+      title: "Run & Listen",
+      subtitle: "Audio format for activity",
+      description: "audio digest for travel/running",
+      tooltip:
+        "5 super-short key points in listening format + 1-2 memorable 'mantras of the day' for motivation and reinforcing ideas.",
+    },
+    ru: {
+      title: "Бег и прослушивание",
+      subtitle: "Аудио-формат для активности",
+      description: "аудио-дайджест для дороги/пробежки",
+      tooltip:
+        "5 сверхкоротких ключевых пунктов в формате для прослушивания + 1–2 запоминающиеся 'мантры дня' для мотивации и закрепления идей.",
+    },
+  },
+}
 
 export default function YouTubeSummarizer() {
   const [url, setUrl] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const FIXED_LANG = "en"
+  const [lang, setLang] = useState<"en" | "ru">("ru") // Устанавливаем русский по умолчанию
   const [error, setError] = useState("")
   const [summary, setSummary] = useState<SummaryPoint[]>([])
   const [copied, setCopied] = useState(false)
@@ -140,7 +196,7 @@ export default function YouTubeSummarizer() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url, scenario: selectedScenario, lang: FIXED_LANG }),
+        body: JSON.stringify({ url, scenario: selectedScenario, lang }), // Используем состояние lang
       })
 
       if (!response.ok) {
@@ -149,12 +205,45 @@ export default function YouTubeSummarizer() {
       }
 
       const data = await response.json()
-      console.log("API Response:", data) // Временный console.log для отладки
 
       if (data.error) {
         throw new Error(data.error)
       } else if (data.summary) {
-        setSummary(data.summary)
+        let processedSummary: SummaryPoint[] = [];
+
+        if (typeof data.summary === 'string') {
+          try {
+            const jsonParsed = JSON.parse(data.summary);
+            if (selectedScenario === "decision" && (jsonParsed.verdict || jsonParsed.reason || jsonParsed.valuevsduration || jsonParsed.targetaudience)) {
+              const extractedText = extractTextFromSummary(jsonParsed);
+              processedSummary.push({ id: "1", text: extractedText });
+            } else {
+              // Если это строка, но не JSON или не сценарий "decision", обрабатываем как обычный текст
+              processedSummary.push({ id: "1", text: data.summary });
+            }
+          } catch (e) {
+            // Если не удалось распарсить как JSON, обрабатываем как обычный текст
+            processedSummary.push({ id: "1", text: data.summary });
+          }
+        } else if (Array.isArray(data.summary)) {
+          // Если это уже массив SummaryPoint, используем его напрямую
+          processedSummary = data.summary;
+        } else if (typeof data.summary === 'object' && data.summary !== null) {
+          // Если это объект, но не массив, и содержит поля для сценария "decision"
+          if (selectedScenario === "decision" && (data.summary.verdict || data.summary.reason || data.summary.valuevsduration || data.summary.targetaudience)) {
+            const extractedText = extractTextFromSummary(data.summary);
+            processedSummary.push({ id: "1", text: extractedText });
+          } else {
+            // В других случаях, если это объект, но не массив и не "decision" сценарий,
+            // пытаемся извлечь текст, если есть поле 'text' или 'content'
+            const textContent = data.summary.text || data.summary.content || JSON.stringify(data.summary);
+            processedSummary.push({ id: "1", text: textContent });
+          }
+        } else {
+          // В любом другом случае, если data.summary не является ни строкой, ни массивом, ни объектом
+          processedSummary.push({ id: "1", text: String(data.summary) });
+        }
+        setSummary(processedSummary);
       } else {
         throw new Error("Транскрипт не найден у провайдера.") // Общая ошибка, если ни summary, ни error не найдены
       }
@@ -255,23 +344,37 @@ export default function YouTubeSummarizer() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                  <Button
-                    onClick={handleSummarize}
-                    disabled={isLoading}
-                    className="h-14 sm:h-16 px-8 sm:px-16 text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 text-white border-0 rounded-2xl shadow-2xl hover:shadow-purple-500/25 transform hover:scale-110 transition-all duration-500 disabled:transform-none disabled:hover:scale-100 hover:shadow-3xl animate-pulse hover:animate-none focus:ring-2 focus:ring-purple-400/50 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-950"
-                    style={{
-                      boxShadow: "0 20px 40px -12px rgba(147, 51, 234, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)",
-                    }}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-3 sm:mr-4 h-6 w-6 sm:h-7 sm:w-7 animate-spin" />
-                        Обрабатываю...
-                      </>
-                    ) : (
-                      "Кратко о видео"
-                    )}
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 w-full">
+                    {/* Селектор языка */}
+                    <div className="flex-1">
+                      <Select value={lang} onValueChange={(value: "en" | "ru") => setLang(value)}>
+                        <SelectTrigger className="h-14 sm:h-16 text-base sm:text-lg border-gray-200 dark:border-gray-700 focus:border-purple-400 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 dark:focus:ring-purple-400/20 transition-all duration-300 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-gray-100">
+                          <SelectValue placeholder="Выберите язык" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700 rounded-xl shadow-lg">
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="ru">Русский</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button
+                      onClick={handleSummarize}
+                      disabled={isLoading}
+                      className="flex-1 h-14 sm:h-16 px-8 sm:px-16 text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 text-white border-0 rounded-2xl shadow-2xl hover:shadow-purple-500/25 transform hover:scale-110 transition-all duration-500 disabled:transform-none disabled:hover:scale-100 hover:shadow-3xl animate-pulse hover:animate-none focus:ring-2 focus:ring-purple-400/50 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-950"
+                      style={{
+                        boxShadow: "0 20px 40px -12px rgba(147, 51, 234, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)",
+                      }}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-3 sm:mr-4 h-6 w-6 sm:h-7 sm:w-7 animate-spin" />
+                          Обрабатываю...
+                        </>
+                      ) : (
+                        "Кратко о видео"
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
 
@@ -354,7 +457,7 @@ export default function YouTubeSummarizer() {
                         <Info className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
                         <div className="absolute bottom-full right-0 mb-2 w-80 p-4 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm rounded-md shadow-sm border border-gray-300 dark:border-gray-600 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-10 transform scale-95 group-hover:scale-100">
                           <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-100 dark:border-t-gray-800"></div>
-                          {scenario.tooltip}
+                          {scenarioTexts[scenario.id][lang].tooltip}
                         </div>
                       </div>
                     </div>
@@ -376,21 +479,21 @@ export default function YouTubeSummarizer() {
                               isSelected ? "text-purple-700 dark:text-purple-300" : "text-gray-900 dark:text-gray-100"
                             }`}
                           >
-                            {scenario.title}
+                            {scenarioTexts[scenario.id][lang].title}
                           </h4>
                           <p
                             className={`text-xs sm:text-sm font-medium mb-2 leading-relaxed ${
                               isSelected ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-300"
                             }`}
                           >
-                            {scenario.subtitle}
+                            {scenarioTexts[scenario.id][lang].subtitle}
                           </p>
                           <p
                             className={`text-xs sm:text-sm leading-relaxed ${
                               isSelected ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-400"
                             }`}
                           >
-                            {scenario.description}
+                            {scenarioTexts[scenario.id][lang].description}
                           </p>
                         </div>
                         {isSelected && (

@@ -23,6 +23,18 @@ import {
   Info,
 } from "lucide-react"
 
+// Вспомогательная функция для удаления символов Markdown
+const stripMarkdown = (s: string) =>
+  s
+    .normalize('NFKC')
+    .replace(/```[\s\S]*?```/g, '')     // fenced code blocks
+    .replace(/`+/g, '')                 // inline code
+    .replace(/(^|\n)[>\s]*([-*+]\s+)/g, '$1') // markdown bullets at line start
+    .replace(/(^|\n)\d+\.\s+/g, '$1')   // numbered list markers
+    .replace(/[*_~#>]+/g, '')           // bold/italic/strike/headers/quotes
+    .replace(/\s{2,}/g, ' ')            // collapse spaces
+    .trim();
+
 interface SummaryPoint {
   id: string
   text: string
@@ -81,8 +93,8 @@ const scenarios: Scenario[] = [
 
 export default function YouTubeSummarizer() {
   const [url, setUrl] = useState("")
-  const [language, setLanguage] = useState("ru")
   const [isLoading, setIsLoading] = useState(false)
+  const FIXED_LANG = "en"
   const [error, setError] = useState("")
   const [summary, setSummary] = useState<SummaryPoint[]>([])
   const [copied, setCopied] = useState(false)
@@ -128,7 +140,7 @@ export default function YouTubeSummarizer() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url, scenario: selectedScenario }),
+        body: JSON.stringify({ url, scenario: selectedScenario, lang: FIXED_LANG }),
       })
 
       if (!response.ok) {
@@ -137,7 +149,15 @@ export default function YouTubeSummarizer() {
       }
 
       const data = await response.json()
-      setSummary(data.summary)
+      console.log("API Response:", data) // Временный console.log для отладки
+
+      if (data.error) {
+        throw new Error(data.error)
+      } else if (data.summary) {
+        setSummary(data.summary)
+      } else {
+        throw new Error("Транскрипт не найден у провайдера.") // Общая ошибка, если ни summary, ни error не найдены
+      }
     } catch (err: any) {
       setError(err.message || "Произошла непредвиденная ошибка.")
       console.error("Ошибка при вызове API суммирования:", err)
@@ -235,34 +255,6 @@ export default function YouTubeSummarizer() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                  <div className="w-full sm:w-52">
-                    <label htmlFor="language-select" className="sr-only">
-                      Выбор языка
-                    </label>
-                    <Select value={language} onValueChange={setLanguage}>
-                      <SelectTrigger
-                        id="language-select"
-                        className="w-full h-12 sm:h-14 border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-400/20 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-950"
-                      >
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
-                        <SelectItem
-                          value="ru"
-                          className="text-gray-900 dark:text-gray-100 hover:bg-gray-100/80 dark:hover:bg-purple-500/10 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-purple-500 data-[state=checked]:to-cyan-500 data-[state=checked]:text-white data-[state=checked]:font-bold rounded-md mx-1 my-0.5"
-                        >
-                          🇷🇺 Русский
-                        </SelectItem>
-                        <SelectItem
-                          value="en"
-                          className="text-gray-900 dark:text-gray-100 hover:bg-gray-100/80 dark:hover:bg-purple-500/10 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-purple-500 data-[state=checked]:to-cyan-500 data-[state=checked]:text-white data-[state=checked]:font-bold rounded-md mx-1 my-0.5"
-                        >
-                          🇺🇸 English
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   <Button
                     onClick={handleSummarize}
                     disabled={isLoading}
@@ -282,6 +274,44 @@ export default function YouTubeSummarizer() {
                   </Button>
                 </div>
               </div>
+
+              {summary.length > 0 && !isLoading && (
+                <div className="mt-6 p-5 bg-gray-50/50 dark:bg-gray-800/30 border border-gray-200/50 dark:border-gray-700/50 rounded-xl animate-in slide-in-from-top-2 duration-300">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Краткое содержание:</h4>
+                  <ul className="list-none pl-0 space-y-2 text-gray-800 dark:text-gray-200">
+                    {summary.map((point) => (
+                      <li key={point.id} className="text-base leading-relaxed">
+                        <span>{stripMarkdown(point.text)}</span>
+                        {point.timestamp && (
+                          <Badge
+                            variant="secondary"
+                            className="ml-2 font-mono text-xs px-2 py-1.5 rounded-md bg-gray-200/60 dark:bg-gray-700/60 text-gray-600 dark:text-gray-400"
+                          >
+                            {point.timestamp}
+                          </Badge>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    onClick={handleCopy}
+                    disabled={copied}
+                    className="mt-4 w-full gap-2 transition-all duration-200 bg-purple-500 hover:bg-purple-600 text-white rounded-lg"
+                  >
+                    {copied ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 text-green-200" />
+                        Скопировано!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4" />
+                        Копировать все пункты
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
 
               {error && !isLoading && (
                 <div className="flex items-center gap-3 p-5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400 animate-in slide-in-from-top-2 duration-300">
@@ -420,91 +450,6 @@ export default function YouTubeSummarizer() {
                 </div>
               </CardContent>
             </Card>
-          )}
-
-          {summary.length > 0 && !isLoading && (
-            <>
-              <Card className="shadow-xl border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm animate-in slide-in-from-bottom-4 duration-500 rounded-2xl transition-all duration-300 hover:shadow-2xl hover:scale-[1.005]">
-                <CardHeader className="pb-6">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                      Краткое содержание
-                    </CardTitle>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopy}
-                      className="gap-2 transition-all duration-200 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                    >
-                      {copied ? (
-                        <>
-                          <CheckCircle2 className="h-4 w-4 text-green-600" />
-                          Скопировано
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-4 w-4" />
-                          Копировать
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  {summary.map((point, index) => (
-                    <div
-                      key={point.id}
-                      className="flex gap-5 p-6 rounded-xl bg-gray-50/50 dark:bg-gray-800/30 border border-gray-200/50 dark:border-gray-700/50 animate-in slide-in-from-left-2 duration-300 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors duration-200"
-                      style={{ animationDelay: `${index * 100}ms` }}
-                    >
-                      <div className="flex-shrink-0 pt-1">
-                        <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full"></div>
-                      </div>
-                      <div className="flex-1 space-y-3">
-                        <p className="text-base leading-7 text-pretty text-gray-800 dark:text-gray-200 font-medium">
-                          {point.text}
-                        </p>
-                        {point.timestamp && (
-                          <Badge
-                            variant="secondary"
-                            className="font-mono text-xs px-2 py-1.5 rounded-md bg-gray-200/60 dark:bg-gray-700/60 text-gray-600 dark:text-gray-400"
-                          >
-                            {point.timestamp}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card className="mt-8 shadow-xl border-0 bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm animate-in fade-in-50 slide-in-from-bottom-4 duration-1000 rounded-2xl transition-all duration-300 hover:shadow-2xl hover:scale-[1.005]">
-                <CardContent className="p-8 relative">
-                  <div className="flex items-start gap-6">
-                    {/* Large quotation mark */}
-                    <div className="text-8xl text-gray-400/60 dark:text-gray-500/40 font-serif leading-none select-none">
-                      "
-                    </div>
-                    <div className="flex-1 pt-4">
-                      <blockquote
-                        className="text-xl font-medium text-gray-800 dark:text-gray-200 leading-relaxed mb-6 animate-in fade-in-50 duration-1500"
-                        style={{ animationDelay: "300ms" }}
-                      >
-                        Самое важное — это не количество информации, которую мы потребляем, а качество понимания того,
-                        что действительно имеет значение.
-                      </blockquote>
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Ключевая мысль видео</p>
-                        <div className="flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-700/80 rounded-full border border-gray-200/60 dark:border-gray-600/60 shadow-sm backdrop-blur-sm">
-                          <span className="text-lg">🎉</span>
-                          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">вдохновляющее</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </>
           )}
         </main>
 

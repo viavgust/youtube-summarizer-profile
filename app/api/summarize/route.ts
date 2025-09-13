@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { createServer } from "@/lib/supabase/server"
 
 // Определение интерфейса для точек суммирования, чтобы избежать дублирования
 interface SummaryPoint {
@@ -418,6 +419,24 @@ export async function POST(request: Request) {
       id: String(index + 1),
       text: text.trim(),
     }))
+
+    // Сохранение истории в Supabase
+    try {
+      const supabase = await createServer()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user && cleanedText?.trim()) {
+        await supabase.from("summaries").insert({
+          user_id: user.id,
+          video_id: videoId,
+          video_url: url,
+          lang: targetLang,
+          summary: cleanedText,
+        });
+      }
+    } catch (dbError: any) {
+      console.error("Ошибка при работе с Supabase для сохранения истории:", dbError)
+    }
 
     return NextResponse.json({ summary: summaryPoints, ...(debugMode && { diagnostics }) });
   } catch (error: any) {

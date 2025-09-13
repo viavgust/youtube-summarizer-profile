@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -11,6 +11,31 @@ export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [filterType, setFilterType] = useState("all")
   const [sortBy, setSortBy] = useState("date")
+  const [history, setHistory] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const response = await fetch('/api/history');
+        if (!response.ok) {
+          throw new Error('Не удалось загрузить историю');
+        }
+        const data = await response.json();
+        if (data.error) {
+            console.error("Ошибка при загрузке истории:", data.error);
+        } else {
+            setHistory(data.items);
+        }
+      } catch (error) {
+        console.error("Ошибка при загрузке истории:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 relative overflow-hidden">
@@ -18,22 +43,6 @@ export default function HistoryPage() {
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-pink-50/30 dark:from-blue-950/20 dark:via-purple-950/10 dark:to-pink-950/20" />
 
       <div className="relative z-10">
-        {/* Header */}
-        <header className="border-b border-border/40 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm">
-          <div className="container mx-auto px-4 py-4 flex justify-between items-center max-w-6xl">
-            <div className="flex items-center gap-2">
-              <Youtube className="h-6 w-6 text-purple-500" />
-              <span className="font-semibold text-lg text-gray-900 dark:text-white">AI Summarizer</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-                <Download className="h-4 w-4" />
-                Export All
-              </Button>
-            </div>
-          </div>
-        </header>
-
         <main className="container mx-auto px-4 py-8 max-w-6xl">
           {/* Page Header */}
           <div className="mb-8">
@@ -83,12 +92,28 @@ export default function HistoryPage() {
           </Card>
 
           {/* Summary List */}
-          <div className="space-y-4 text-center">
-            <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl">
-                <CardContent className="p-6">
-                    <p>No history yet. Analyze a video to get started!</p>
-                </CardContent>
-            </Card>
+          <div className="space-y-4">
+            {loading ? (
+              <p>Загрузка истории...</p>
+            ) : history.length > 0 ? (
+              history.map((item) => (
+                <Card key={item.id} className="shadow-lg border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl">
+                  <CardContent className="p-6">
+                    <p className="font-bold">{item.video_url}</p>
+                    <p>{item.summary}</p>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                      <span>{new Date(item.created_at).toLocaleString()}</span> | <span>{item.scenario}</span> | <span>{item.lang}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl">
+                  <CardContent className="p-6 text-center">
+                      <p>No history yet. Analyze a video to get started!</p>
+                  </CardContent>
+              </Card>
+            )}
           </div>
         </main>
       </div>

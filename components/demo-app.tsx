@@ -1,13 +1,18 @@
 "use client"
 
 import { useState } from "react"
+import type { User } from '@supabase/supabase-js'
 import YouTubeSummarizer from "./youtube-summarizer"
 import AuthPage from "./auth-page"
 import ProfilePage from "./profile-page"
 import HistoryPage from "./history-page"
 import Navigation from "./navigation"
 
-export default function DemoApp() {
+interface DemoAppProps {
+  user: User | null
+}
+
+export default function DemoApp({ user }: DemoAppProps) {
   const [currentPage, setCurrentPage] = useState("home")
 
   const renderPage = () => {
@@ -17,7 +22,7 @@ export default function DemoApp() {
       case "auth":
         return <AuthPage />
       case "profile":
-        return <ProfilePage />
+        return <ProfilePage user={user} />
       case "history":
         return <HistoryPage />
       default:
@@ -27,7 +32,7 @@ export default function DemoApp() {
 
   return (
     <div className="min-h-screen">
-      <Navigation currentPage={currentPage} onPageChange={setCurrentPage} />
+      <Navigation user={user} currentPage={currentPage} onPageChange={setCurrentPage} />
       <div className="flex-1">{renderPage()}</div>
     </div>
   )

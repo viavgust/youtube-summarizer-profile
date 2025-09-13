@@ -144,62 +144,78 @@ export async function POST(request: Request) {
     diagnostics.videoId = videoId;
 
     // Получение ключей API из переменных окружения
-    const rapidApiKey = process.env.RAPIDAPI_KEY
-    const geminiApiKey = process.env.GEMINI_API_KEY
+    const rapidApiKey = process.env.RAPIDAPI_KEY;
+    const rapidApiHost = process.env.RAPIDAPI_HOST;
+    const geminiApiKey = process.env.GEMINI_API_KEY;
 
-    if (!rapidApiKey) {
-      const errorMsg = "Ошибка конфигурации: RAPIDAPI_KEY не установлен в переменных окружения.";
-      console.error(errorMsg);
+    if (!rapidApiKey || !rapidApiHost) {
+      const errorMsg = "Ошибка конфигурации: RAPIDAPI_KEY или RAPIDAPI_HOST не установлены.";
+      console.error("[RapidAPI] missing env", errorMsg);
       diagnostics.errors.push(errorMsg);
-      return NextResponse.json({ error: "Ошибка конфигурации сервера: RapidAPI ключ не найден.", ...(debugMode && { diagnostics }) }, { status: 500 });
+      return NextResponse.json({ error: "Ошибка конфигурации сервера: RapidAPI ключ или хост не найден.", ...(debugMode && { diagnostics }) }, { status: 500 });
     }
     if (!geminiApiKey) {
-      const errorMsg = "Ошибка конфигурации: GEMINI_API_KEY не установлен в переменных окружения.";
+      const errorMsg = "Ошибка конфигурации: GEMINI_API_KEY не установлен.";
       console.error(errorMsg);
       diagnostics.errors.push(errorMsg);
       return NextResponse.json({ error: "Ошибка конфигурации сервера: Gemini API ключ не найден.", ...(debugMode && { diagnostics }) }, { status: 500 });
     }
 
-    // Шаг 1: Вызов RapidAPI для получения транскрипта
-    const rapidApiUrl = `https://youtube-captions-transcript-subtitles-video-combiner.p.rapidapi.com/download-all/${videoId}?format_subtitle=srt&format_answer=json&lang=${receivedLang}`
-    const rapidApiHeaders = {
-      "x-rapidapi-host": "youtube-captions-transcript-subtitles-video-combiner.p.rapidapi.com",
-      "x-rapidapi-key": rapidApiKey,
-      "Accept": "application/json"
-    }
+    let rapidApiData: any = null;
+    let transcript: string | null = null;
 
-    console.log(`Вызов RapidAPI для videoId: ${videoId} с языком: ${receivedLang}`);
-    diagnostics.langTried.push(receivedLang);
-    const rapidApiResponse = await fetch(rapidApiUrl, { headers: rapidApiHeaders });
+    // --- RapidAPI transcript fetch (fixed) ---
+    const base = `https://${rapidApiHost}`;
+    const rapidApiHeaders = {
+      "X-RapidAPI-Host": rapidApiHost,
+      "X-RapidAPI-Key": rapidApiKey,
+      "Accept": "application/json",
+    };
+
+    const rapidapiUrl = `${base}/download-json/${videoId}?language=${receivedLang}`;
+    const fetchOptions = { headers: rapidApiHeaders };
+    
+    console.log("[RapidAPI] Sending request:", JSON.stringify({ url: rapidapiUrl, options: fetchOptions }, null, 2));
+
+    const rapidApiResponse = await fetch(rapidapiUrl, fetchOptions);
+
+    const responseHeaders: Record<string, string> = {};
+    rapidApiResponse.headers.forEach((value, key) => {
+      responseHeaders[key] = value;
+    });
+
+    console.log("[RapidAPI] Received response:", JSON.stringify({
+      status: rapidApiResponse.status,
+      statusText: rapidApiResponse.statusText,
+      headers: responseHeaders
+    }, null, 2));
 
     if (!rapidApiResponse.ok) {
-      const errorText = await rapidApiResponse.text();
-      const errorMsg = `Ошибка RapidAPI (${rapidApiResponse.status}): ${rapidApiResponse.statusText}. Ответ: ${errorText}`;
-      console.error(errorMsg);
-      diagnostics.errors.push(errorMsg);
-      diagnostics.rapidApiResponseStatus = rapidApiResponse.status;
-      diagnostics.rapidApiUrl = rapidApiUrl;
-      // Не возвращаем ошибку здесь, чтобы дать шанс fallback'у
-    }
+      const errTxt = await rapidApiResponse.text().catch(() => "");
+      console.warn("[RapidAPI] first try failed:", rapidApiResponse.status, rapidApiResponse.statusText, errTxt?.slice(0, 300));
 
-    let rapidApiData: any = null;
-    try { rapidApiData = await rapidApiResponse.json(); } catch (e: any) {
-      diagnostics.errors.push(`Ошибка парсинга RapidAPI JSON: ${e.message || e}`);
-    }
-    if (rapidApiData) {
-      diagnostics.rapidApiRawData = {
-        isArray: Array.isArray(rapidApiData),
-        typeOf: typeof rapidApiData,
-        keys: Object.keys(rapidApiData || {})
-      };
-      if (debugMode) {
-        console.log("RapidAPI Raw Data (initial):", JSON.stringify(diagnostics.rapidApiRawData, null, 2));
-        // if (Array.isArray(rapidApiData) && rapidApiData.length > 0) {
-        //   console.log("First RapidAPI item (initial):", JSON.stringify(rapidApiData[0], null, 2));
-        // }
+      // retry with fallback language EN
+      const retryUrl = `${base}/download-json/${videoId}?language=en`;
+      console.log("[RapidAPI] retry url:", retryUrl);
+
+      const retryRes = await fetch(retryUrl, { headers: rapidApiHeaders });
+
+      if (!retryRes.ok) {
+        const rTxt = await retryRes.text().catch(() => "");
+        console.warn("[RapidAPI] retry failed:", retryRes.status, retryRes.statusText, rTxt?.slice(0, 300));
+        diagnostics.errors.push(`RapidAPI failed: ${rapidApiResponse.status}/${retryRes.status}`);
+        diagnostics.rapidApiResponseStatus = `${rapidApiResponse.status} -> ${retryRes.status}`;
+      } else {
+        const j2 = await retryRes.json().catch((e:any)=>{ console.error("parse retry json", e); return null; });
+        rapidApiData = j2;
       }
+    } else {
+      const j1 = await rapidApiResponse.json().catch((e:any)=>{ console.error("parse json", e); return null; });
+      rapidApiData = j1;
     }
-    let transcript: string | null = pickTranscript(rapidApiData);
+    // --- end RapidAPI block ---
+
+    transcript = pickTranscript(rapidApiData);
     diagnostics.pickTranscriptRapidRawResult = transcript; // Добавляем сырой результат pickTranscript
     diagnostics.pickTranscriptRapidLength = transcript ? transcript.length : null;
     diagnostics.lengths.rapid = transcript ? transcript.length : null;
@@ -208,53 +224,8 @@ export async function POST(request: Request) {
       diagnostics.actualTranscriptLang = receivedLang; // Устанавливаем язык, если транскрипт найден
     }
 
-    // если пусто — повторный запрос с lang=en
-    if (transcript === null || transcript.trim().length === 0) {
-      console.log(`Транскрипт не найден для языка ${receivedLang}, попытка с lang=en для videoId: ${videoId}`);
-      diagnostics.langTried.push("en");
-      const base = "https://youtube-captions-transcript-subtitles-video-combiner.p.rapidapi.com";
-      const retryUrl = `${base}/download-all/${videoId}?format_subtitle=srt&format_answer=json&lang=en`;
-      const retryRes = await fetch(retryUrl, { headers: {
-        "X-RapidAPI-Host": "youtube-captions-transcript-subtitles-video-combiner.p.rapidapi.com",
-        "X-RapidAPI-Key": process.env.RAPIDAPI_KEY as string,
-        "Accept": "application/json"
-      }});
-      if (!retryRes.ok) {
-        const errorText = await retryRes.text();
-        const errorMsg = `Ошибка RapidAPI (retry lang=en) (${retryRes.status}): ${retryRes.statusText}. Ответ: ${errorText}`;
-        console.error(errorMsg);
-        diagnostics.errors.push(errorMsg);
-        diagnostics.rapidApiRetryResponseStatus = retryRes.status;
-        diagnostics.rapidApiRetryUrl = retryUrl;
-      }
-
-      if (retryRes.ok) {
-        let j2:any = null; try { j2 = await retryRes.json(); } catch (e: any) {
-          diagnostics.errors.push(`Ошибка парсинга RapidAPI (retry lang=en) JSON: ${e.message || e}`);
-        }
-        if (j2) {
-          diagnostics.rapidApiRetryRawData = {
-            isArray: Array.isArray(j2),
-            typeOf: typeof j2,
-            keys: Object.keys(j2 || {})
-          };
-          if (debugMode) {
-            console.log("RapidAPI Raw Data (retry):", JSON.stringify(diagnostics.rapidApiRetryRawData, null, 2));
-            // if (Array.isArray(j2) && j2.length > 0) {
-            //   console.log("First RapidAPI item (retry):", JSON.stringify(j2[0], null, 2));
-            // }
-          }
-        }
-        transcript = pickTranscript(j2);
-        diagnostics.pickTranscriptRapidRetryRawResult = transcript; // Добавляем сырой результат pickTranscript
-        diagnostics.pickTranscriptRapidRetryLength = transcript ? transcript.length : null;
-        diagnostics.lengths.rapid = transcript ? transcript.length : null; // Обновляем общую длину rapid
-        if (transcript && transcript.trim()) {
-          console.log(`Транскрипт успешно получен с lang=en (первые 100 символов): ${transcript.substring(0, 100)}...`);
-          diagnostics.source = "rapidapi";
-          diagnostics.actualTranscriptLang = "en"; // Устанавливаем язык, если транскрипт найден
-        }
-      }
+    if (transcript) {
+      diagnostics.source = "rapidapi";
     }
 
     // Резервный вариант: получение субтитров напрямую из YouTube timedtext

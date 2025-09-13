@@ -16,19 +16,32 @@ export default function HistoryPage() {
 
   useEffect(() => {
     const fetchHistory = async () => {
+      setLoading(true);
       try {
         const response = await fetch('/api/history');
-        if (!response.ok) {
-          throw new Error('Не удалось загрузить историю');
+
+        // Если пользователь не авторизован, это не ошибка, а ожидаемое поведение.
+        // Просто показываем пустую историю.
+        if (response.status === 401) {
+          setHistory([]);
+          return;
         }
+
+        if (!response.ok) {
+          throw new Error(`Не удалось загрузить историю: ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        
         if (data.error) {
-            console.error("Ошибка при загрузке истории:", data.error);
+            console.error("Ошибка API при загрузке истории:", data.error);
+            setHistory([]);
         } else {
-            setHistory(data.items);
+            setHistory(data.items || []);
         }
       } catch (error) {
-        console.error("Ошибка при загрузке истории:", error);
+        console.error("Сетевая ошибка при загрузке истории:", error);
+        setHistory([]);
       } finally {
         setLoading(false);
       }

@@ -292,26 +292,6 @@ export default function YouTubeSummarizer() {
 
       {/* Content with relative positioning */}
       <div className="relative z-10">
-        {/* Header with theme toggle */}
-        <header className="border-b border-border/40 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center max-w-5xl">
-            <div className="flex items-center gap-2">
-              <Youtube className="h-6 w-6 text-purple-500" />
-              <span className="font-semibold text-lg text-gray-900 dark:text-white">AI Summarizer</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
-            >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-gray-700 dark:text-gray-300" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-gray-700 dark:text-gray-300" />
-              <span className="sr-only">Переключить тему</span>
-            </Button>
-          </div>
-        </header>
-
         {/* Main content */}
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 max-w-4xl">
           <div className="text-center mb-12 sm:mb-16 space-y-4 sm:space-y-6">

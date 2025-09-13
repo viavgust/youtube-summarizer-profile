@@ -18,7 +18,7 @@ export default function SignOutButton() {
   return (
     <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2 hover:bg-gray-100 dark:hover:bg-gray-800">
       <LogOut className="h-4 w-4" />
-      Sign Out
+      Выйти
     </Button>
   )
 }

@@ -16,10 +16,10 @@ export default function ProfilePage({ user }: ProfilePageProps) {
       <div className="min-h-screen bg-white dark:bg-gray-950 p-8">
         <Card>
           <CardHeader>
-            <CardTitle>Profile</CardTitle>
+            <CardTitle>Профиль</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Please sign in to view your profile.</p>
+            <p>Пожалуйста, войдите, чтобы просмотреть свой профиль.</p>
           </CardContent>
         </Card>
       </div>
@@ -61,11 +61,11 @@ export default function ProfilePage({ user }: ProfilePageProps) {
         <Card className="shadow-xl border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl">
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-              Recent Activity
+              Недавняя активность
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p>No recent activity to show.</p>
+            <p>Нет недавней активности для отображения.</p>
           </CardContent>
         </Card>
       </main>

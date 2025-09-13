@@ -33,8 +33,8 @@ export default function SignIn() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Sign In</CardTitle>
-          <CardDescription>Enter your credentials to access your account.</CardDescription>
+          <CardTitle>Вход</CardTitle>
+          <CardDescription>Введите свои данные для доступа к аккаунту.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignIn} className="space-y-4">
@@ -50,7 +50,7 @@ export default function SignIn() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Пароль</Label>
               <Input
                 id="password"
                 type="password"
@@ -60,13 +60,13 @@ export default function SignIn() {
               />
             </div>
             <Button type="submit" className="w-full">
-              Sign In
+              Войти
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Don't have an account?{" "}
+            Нет аккаунта?{" "}
             <a href="/auth/sign-up" className="underline">
-              Sign up
+              Зарегистрироваться
             </a>
           </div>
         </CardContent>

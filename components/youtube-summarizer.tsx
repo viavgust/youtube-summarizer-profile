@@ -552,7 +552,7 @@ export default function YouTubeSummarizer() {
                   href="#"
                   className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 relative group px-2 py-1 focus:ring-2 focus:ring-purple-400/50 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-950 rounded"
                 >
-                  <span>About</span>
+                  <span>О нас</span>
                   <span className="absolute bottom-0 left-2 w-0 h-px bg-gradient-to-r from-purple-500 to-cyan-500 transition-all duration-300 group-hover:w-[calc(100%-16px)]"></span>
                 </a>
                 <span className="text-gray-300 dark:text-gray-600">·</span>
@@ -560,7 +560,7 @@ export default function YouTubeSummarizer() {
                   href="#"
                   className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 relative group px-2 py-1 focus:ring-2 focus:ring-purple-400/50 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-950 rounded"
                 >
-                  <span>Privacy</span>
+                  <span>Конфиденциальность</span>
                   <span className="absolute bottom-0 left-2 w-0 h-px bg-gradient-to-r from-purple-500 to-cyan-500 transition-all duration-300 group-hover:w-[calc(100%-16px)]"></span>
                 </a>
                 <span className="text-gray-300 dark:text-gray-600">·</span>
@@ -568,7 +568,7 @@ export default function YouTubeSummarizer() {
                   href="#"
                   className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 relative group px-2 py-1 focus:ring-2 focus:ring-purple-400/50 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-950 rounded"
                 >
-                  <span>Contact</span>
+                  <span>Контакты</span>
                   <span className="absolute bottom-0 left-2 w-0 h-px bg-gradient-to-r from-purple-500 to-cyan-500 transition-all duration-300 group-hover:w-[calc(100%-16px)]"></span>
                 </a>
               </div>

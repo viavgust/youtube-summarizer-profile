@@ -34,8 +34,8 @@ export default function SignUp() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Sign Up</CardTitle>
-          <CardDescription>Create a new account.</CardDescription>
+          <CardTitle>Регистрация</CardTitle>
+          <CardDescription>Создайте новый аккаунт.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp} className="space-y-4">
@@ -51,7 +51,7 @@ export default function SignUp() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Пароль</Label>
               <Input
                 id="password"
                 type="password"
@@ -61,7 +61,7 @@ export default function SignUp() {
               />
             </div>
             <Button type="submit" className="w-full">
-              Sign Up
+              Зарегистрироваться
             </Button>
           </form>
         </CardContent>

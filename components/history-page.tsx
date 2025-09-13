@@ -59,8 +59,8 @@ export default function HistoryPage() {
         <main className="container mx-auto px-4 py-8 max-w-6xl">
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Analysis History</h1>
-            <p className="text-gray-600 dark:text-gray-400">All your summaries in one place.</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">История анализов</h1>
+            <p className="text-gray-600 dark:text-gray-400">Все ваши саммари в одном месте.</p>
           </div>
 
           {/* Filters */}
@@ -70,7 +70,7 @@ export default function HistoryPage() {
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <Input
-                    placeholder="Search by title or content..."
+                    placeholder="Поиск по названию или содержанию..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 h-10"
@@ -82,11 +82,11 @@ export default function HistoryPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="quick">Quick Scan</SelectItem>
-                    <SelectItem value="deep">Deep Dive</SelectItem>
-                    <SelectItem value="decision">Decision Helper</SelectItem>
-                    <SelectItem value="audio">Run & Listen</SelectItem>
+                    <SelectItem value="all">Все типы</SelectItem>
+                    <SelectItem value="quick">Быстрый обзор</SelectItem>
+                    <SelectItem value="deep">Глубокий анализ</SelectItem>
+                    <SelectItem value="decision">Помощник в принятии решений</SelectItem>
+                    <SelectItem value="audio">Бег и прослушивание</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={sortBy} onValueChange={setSortBy}>
@@ -95,9 +95,9 @@ export default function HistoryPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="date">Sort by Date</SelectItem>
-                    <SelectItem value="title">Sort by Title</SelectItem>
-                    <SelectItem value="duration">Sort by Duration</SelectItem>
+                    <SelectItem value="date">Сортировать по дате</SelectItem>
+                    <SelectItem value="title">Сортировать по названию</SelectItem>
+                    <SelectItem value="duration">Сортировать по длительности</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -123,7 +123,7 @@ export default function HistoryPage() {
             ) : (
               <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl">
                   <CardContent className="p-6 text-center">
-                      <p>No history yet. Analyze a video to get started!</p>
+                      <p>Истории пока нет. Проанализируйте видео, чтобы начать!</p>
                   </CardContent>
               </Card>
             )}

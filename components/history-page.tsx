@@ -14,13 +14,6 @@ export default function HistoryPage() {
   const [history, setHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  const scenarioMapping: { [key: string]: string } = {
-    quick: "Быстрый обзор",
-    deep: "Глубокий анализ",
-    decision: "Помощник в принятии решений",
-    audio: "Бег и прослушивание",
-  };
-
   const filteredHistory = useMemo(() => {
     let processedHistory = [...history];
 
@@ -34,15 +27,7 @@ export default function HistoryPage() {
 
     // Filter
     if (filterType !== "all") {
-      const filterValue = scenarioMapping[filterType];
-      console.log(`Filtering by: "${filterValue}"`); // Debug log
-      processedHistory = processedHistory.filter(item => {
-        const itemScenario = item.scenario?.trim();
-        if (itemScenario) {
-          console.log(`Comparing: "${itemScenario}" === "${filterValue}" -> ${itemScenario === filterValue}`); // Debug log
-        }
-        return itemScenario === filterValue;
-      });
+      processedHistory = processedHistory.filter(item => item.scenario === filterType);
     }
 
     // Sort

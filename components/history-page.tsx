@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -13,6 +13,39 @@ export default function HistoryPage() {
   const [sortBy, setSortBy] = useState("date")
   const [history, setHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+
+  const scenarioMapping: { [key: string]: string } = {
+    quick: "Быстрый обзор",
+    deep: "Глубокий анализ",
+    decision: "Помощник в принятии решений",
+    audio: "Бег и прослушивание",
+  };
+
+  const filteredHistory = useMemo(() => {
+    let processedHistory = [...history];
+
+    // Search
+    if (searchQuery) {
+      processedHistory = processedHistory.filter(item =>
+        item.video_url.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.summary.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Filter
+    if (filterType !== "all") {
+      processedHistory = processedHistory.filter(item => item.scenario === scenarioMapping[filterType]);
+    }
+
+    // Sort
+    if (sortBy === "date") {
+      processedHistory.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    } else if (sortBy === "title") {
+      processedHistory.sort((a, b) => a.video_url.localeCompare(b.video_url));
+    }
+
+    return processedHistory;
+  }, [history, searchQuery, filterType, sortBy]);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -97,7 +130,6 @@ export default function HistoryPage() {
                   <SelectContent>
                     <SelectItem value="date">Сортировать по дате</SelectItem>
                     <SelectItem value="title">Сортировать по названию</SelectItem>
-                    <SelectItem value="duration">Сортировать по длительности</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -108,12 +140,12 @@ export default function HistoryPage() {
           <div className="space-y-4">
             {loading ? (
               <p>Загрузка истории...</p>
-            ) : history.length > 0 ? (
-              history.map((item) => (
+            ) : filteredHistory.length > 0 ? (
+              filteredHistory.map((item) => (
                 <Card key={item.id} className="shadow-lg border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl">
                   <CardContent className="p-6">
-                    <p className="font-bold">{item.video_url}</p>
-                    <p>{item.summary}</p>
+                    <a href={item.video_url} target="_blank" rel="noopener noreferrer" className="font-bold hover:underline break-all">{item.video_url}</a>
+                    <p className="mt-2">{item.summary}</p>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                       <span>{new Date(item.created_at).toLocaleString()}</span> | <span>{item.scenario}</span> | <span>{item.lang}</span>
                     </div>
@@ -123,7 +155,7 @@ export default function HistoryPage() {
             ) : (
               <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl">
                   <CardContent className="p-6 text-center">
-                      <p>Истории пока нет. Проанализируйте видео, чтобы начать!</p>
+                      <p>Ничего не найдено. Попробуйте изменить параметры поиска или фильтрации.</p>
                   </CardContent>
               </Card>
             )}

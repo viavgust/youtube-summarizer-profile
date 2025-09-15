@@ -27,9 +27,8 @@ export default function SignUp() {
       console.error(error)
       alert(error.message)
     } else {
-      // You might want to show a confirmation message
-      // or automatically redirect to the sign-in page.
-      router.push('/auth/sign-in')
+      // Redirect to the confirmation page
+      router.push('/auth/confirm')
     }
   }
 

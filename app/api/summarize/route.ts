@@ -432,6 +432,7 @@ export async function POST(request: Request) {
           video_url: url,
           lang: targetLang,
           summary: cleanedText,
+          scenario: scenario,
         });
       }
     } catch (dbError: any) {

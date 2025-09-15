@@ -34,7 +34,7 @@ export default function HistoryPage() {
 
     // Filter
     if (filterType !== "all") {
-      processedHistory = processedHistory.filter(item => item.scenario === scenarioMapping[filterType]);
+      processedHistory = processedHistory.filter(item => item.scenario?.trim() === scenarioMapping[filterType]);
     }
 
     // Sort

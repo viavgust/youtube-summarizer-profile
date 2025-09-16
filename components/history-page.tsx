@@ -9,6 +9,7 @@ import { Youtube, Search, Filter, Calendar, Download } from "lucide-react"
 
 export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState("")
+  const [filterType, setFilterType] = useState("all")
   const [sortBy, setSortBy] = useState("date")
   const [history, setHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -24,6 +25,11 @@ export default function HistoryPage() {
       );
     }
 
+    // Filter
+    if (filterType !== "all") {
+      processedHistory = processedHistory.filter(item => item.scenario === filterType);
+    }
+
     // Sort
     if (sortBy === "date") {
       processedHistory.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -32,7 +38,7 @@ export default function HistoryPage() {
     }
 
     return processedHistory;
-  }, [history, searchQuery, sortBy]);
+  }, [history, searchQuery, filterType, sortBy]);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -96,6 +102,19 @@ export default function HistoryPage() {
                     className="pl-10 h-10"
                   />
                 </div>
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger className="w-full md:w-48 h-10">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Все типы</SelectItem>
+                    <SelectItem value="quick">Быстрый обзор</SelectItem>
+                    <SelectItem value="deep">Глубокий анализ</SelectItem>
+                    <SelectItem value="decision">Помощник в принятии решений</SelectItem>
+                    <SelectItem value="audio">Бег и прослушивание</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="w-full md:w-48 h-10">
                     <Calendar className="h-4 w-4 mr-2" />

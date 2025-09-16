@@ -152,7 +152,6 @@ export default function YouTubeSummarizer() {
   const [isLoading, setIsLoading] = useState(false)
   const [lang, setLang] = useState<"en" | "ru">("ru") // Устанавливаем русский по умолчанию
   const [error, setError] = useState("")
-  const [dbError, setDbError] = useState("")
   const [summary, setSummary] = useState<SummaryPoint[]>([])
   const [copied, setCopied] = useState(false)
   const [selectedScenario, setSelectedScenario] = useState<ScenarioType>("quick")
@@ -189,7 +188,6 @@ export default function YouTubeSummarizer() {
 
     setIsLoading(true)
     setError("")
-    setDbError("")
     setSummary([])
 
     try {
@@ -207,10 +205,6 @@ export default function YouTubeSummarizer() {
       }
 
       const data = await response.json()
-
-      if (data.dbError) {
-        setDbError(`Саммари готово, но не удалось сохранить его в историю: ${data.dbError}`)
-      }
 
       if (data.error) {
         throw new Error(data.error)
@@ -404,13 +398,6 @@ export default function YouTubeSummarizer() {
                       </>
                     )}
                   </Button>
-                </div>
-              )}
-
-              {dbError && !isLoading && (
-                <div className="flex items-center gap-3 p-4 mt-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-xl text-yellow-700 dark:text-yellow-400">
-                  <AlertCircle className="h-5 w-5 flex-shrink-0" />
-                  <span className="text-sm">{dbError}</span>
                 </div>
               )}
 

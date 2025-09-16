@@ -421,7 +421,6 @@ export async function POST(request: Request) {
     }))
 
     // Сохранение истории в Supabase
-    let dbError = null;
     try {
       const supabase = await createServer()
       const { data: { user } } = await supabase.auth.getUser()
@@ -436,15 +435,15 @@ export async function POST(request: Request) {
           scenario: scenario,
         });
         if (error) {
-          throw error;
+          // Log the error but don't block the user from getting their summary
+          console.error("Ошибка при работе с Supabase для сохранения истории:", error);
         }
       }
     } catch (error: any) {
       console.error("Ошибка при работе с Supabase для сохранения истории:", error)
-      dbError = error.message;
     }
 
-    return NextResponse.json({ summary: summaryPoints, dbError, ...(debugMode && { diagnostics }) });
+    return NextResponse.json({ summary: summaryPoints, ...(debugMode && { diagnostics }) });
   } catch (error: any) {
     const errorMsg = `Критическая ошибка в API-маршруте /api/summarize: ${error.message || error}`;
     console.error(errorMsg, error);

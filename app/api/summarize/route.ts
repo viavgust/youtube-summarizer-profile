@@ -426,8 +426,8 @@ export async function POST(request: Request) {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (user && cleanedText?.trim()) {
+        // user_id будет добавлен автоматически триггером в базе данных
         await supabase.from("summaries").insert({
-          user_id: user.id,
           video_id: videoId,
           video_url: url,
           lang: targetLang,

@@ -421,25 +421,30 @@ export async function POST(request: Request) {
     }))
 
     // Сохранение истории в Supabase
+    let dbError = null;
     try {
       const supabase = await createServer()
       const { data: { user } } = await supabase.auth.getUser()
 
       if (user && cleanedText?.trim()) {
         // user_id будет добавлен автоматически триггером в базе данных
-        await supabase.from("summaries").insert({
+        const { error } = await supabase.from("summaries").insert({
           video_id: videoId,
           video_url: url,
           lang: targetLang,
           summary: cleanedText,
           scenario: scenario,
         });
+        if (error) {
+          throw error;
+        }
       }
-    } catch (dbError: any) {
-      console.error("Ошибка при работе с Supabase для сохранения истории:", dbError)
+    } catch (error: any) {
+      console.error("Ошибка при работе с Supabase для сохранения истории:", error)
+      dbError = error.message;
     }
 
-    return NextResponse.json({ summary: summaryPoints, ...(debugMode && { diagnostics }) });
+    return NextResponse.json({ summary: summaryPoints, dbError, ...(debugMode && { diagnostics }) });
   } catch (error: any) {
     const errorMsg = `Критическая ошибка в API-маршруте /api/summarize: ${error.message || error}`;
     console.error(errorMsg, error);

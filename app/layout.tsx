@@ -10,6 +10,21 @@ export const metadata: Metadata = {
   title: "AI YouTube Summarizer",
   description: "Вставь ссылку и получи саммари за секунды",
   generator: "v0.app",
+  openGraph: {
+    title: "AI YouTube Summarizer",
+    description: "Вставь ссылку и получи саммари за секунды",
+    url: "https://youtube-summarizer-profile-hazel.vercel.app/",
+    siteName: "AI YouTube Summarizer",
+    images: [
+      {
+        url: "/preview.png",
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: "ru_RU",
+    type: "website",
+  },
 }
 
 export default function RootLayout({

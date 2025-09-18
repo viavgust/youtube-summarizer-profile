@@ -17,13 +17,19 @@ export const metadata: Metadata = {
     siteName: "AI YouTube Summarizer",
     images: [
       {
-        url: "https://youtube-summarizer-profile-hazel.vercel.app/placeholder.jpg",
+        url: "https://youtube-summarizer-profile-hazel.vercel.app/preview.png",
         width: 1200,
         height: 630,
       },
     ],
     locale: "ru_RU",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AI YouTube Summarizer",
+    description: "Вставь ссылку и получи саммари за секунды",
+    images: ["https://youtube-summarizer-profile-hazel.vercel.app/preview.png"],
   },
 }
 

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     siteName: "AI YouTube Summarizer",
     images: [
       {
-        url: "/preview.png",
+        url: "https://youtube-summarizer-profile-hazel.vercel.app/preview.png",
         width: 1200,
         height: 630,
       },
